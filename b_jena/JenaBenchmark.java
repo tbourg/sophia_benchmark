@@ -35,6 +35,7 @@ public class JenaBenchmark {
 	
 	    
         long t0, t1;
+	double time_load;
         t0 = System.nanoTime();
 	    InputStream in = FileManager.get().open(args[1]);
 		final PipedRDFIterator<Triple> iter = new PipedRDFIterator<Triple>();
@@ -48,7 +49,6 @@ public class JenaBenchmark {
 					RDFDataMgr.parse(tripleStream, in, Lang.TTL);
 				} catch (final Exception e) {
 					e.printStackTrace();
-					logger.error("Error while parsing ",e);
 					System.exit(-1);
 				}
 			}
@@ -56,9 +56,10 @@ public class JenaBenchmark {
 		executor.submit(parser);
 		while (iter.hasNext()) {
 			final Triple triple = iter.next();
-			parseTriple(triple);
+			// parseTriple(triple);
 		}
 		iter.close();
+	t1 = System.nanoTime();
         time_load = (t1-t0)/1e9;
         System.out.println(time_load);
     }
