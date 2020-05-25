@@ -2,12 +2,10 @@ import java.io.*;
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.util.*;
 import org.apache.jena.vocabulary.*;
-import org.apache.log4j.PropertyConfigurator;
+import org.apache.jena.riot.RDFMgr;
 
 public class JenaBenchmark {
     public static void main(String[] args) {
-        // configure Log4J (to get rid of warn messages)
-        PropertyConfigurator.configure("apache-jena-3.8.0/jena-log4j.properties");
 
         if (args[0].equals("parse")) {
             benchmark_parse(args);
@@ -24,6 +22,8 @@ public class JenaBenchmark {
 
     public static void benchmark_parse(String[] args) {
         System.err.println("benchmark: parse");
+	InputStream in = FileManager.get().open(args[1]);
+
         throw new RuntimeException("Not implemented");
     }
 
