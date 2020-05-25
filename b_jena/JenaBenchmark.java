@@ -55,10 +55,6 @@ public class JenaBenchmark {
 			parseTriple(triple);
 		}
 		iter.close();
-	}
-
-}
-        throw new RuntimeException("Not implemented");
     }
 
     public static void benchmark_query(int queryNum, String[] args) {
