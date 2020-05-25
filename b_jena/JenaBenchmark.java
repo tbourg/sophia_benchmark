@@ -2,7 +2,17 @@ import java.io.*;
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.util.*;
 import org.apache.jena.vocabulary.*;
-import org.apache.jena.riot.RDFMgr;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.jena.riot.*;
+import org.apache.jena.graph.*;
+import org.apache.jena.riot.lang.PipedRDFIterator;
+import org.apache.jena.riot.lang.PipedRDFStream;
+import org.apache.jena.riot.lang.PipedTriplesStream;
+
 
 public class JenaBenchmark {
     public static void main(String[] args) {
@@ -23,7 +33,31 @@ public class JenaBenchmark {
     public static void benchmark_parse(String[] args) {
         System.err.println("benchmark: parse");
 	InputStream in = FileManager.get().open(args[1]);
+		final PipedRDFIterator<Triple> iter = new PipedRDFIterator<Triple>();
+		final PipedRDFStream<Triple> tripleStream = new PipedTriplesStream(iter);
+		final ExecutorService executor = Executors.newSingleThreadExecutor();
+		final Runnable parser = new Runnable() {
+			@Override
+			public void run() {
+				// Call the parsing process.
+				try {
+					RDFDataMgr.parse(tripleStream, in, Lang.TTL);
+				} catch (final Exception e) {
+					e.printStackTrace();
+					logger.error("Error while parsing ",e);
+					System.exit(-1);
+				}
+			}
+		};
+		executor.submit(parser);
+		while (iter.hasNext()) {
+			final Triple triple = iter.next();
+			parseTriple(triple);
+		}
+		iter.close();
+	}
 
+}
         throw new RuntimeException("Not implemented");
     }
 
