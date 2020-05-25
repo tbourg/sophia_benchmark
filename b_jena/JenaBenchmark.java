@@ -32,7 +32,11 @@ public class JenaBenchmark {
 
     public static void benchmark_parse(String[] args) {
         System.err.println("benchmark: parse");
-	InputStream in = FileManager.get().open(args[1]);
+	
+	    
+        long t0, t1;
+        t0 = System.nanoTime();
+	    InputStream in = FileManager.get().open(args[1]);
 		final PipedRDFIterator<Triple> iter = new PipedRDFIterator<Triple>();
 		final PipedRDFStream<Triple> tripleStream = new PipedTriplesStream(iter);
 		final ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -55,6 +59,8 @@ public class JenaBenchmark {
 			parseTriple(triple);
 		}
 		iter.close();
+        time_load = (t1-t0)/1e9;
+        System.out.println(time_load);
     }
 
     public static void benchmark_query(int queryNum, String[] args) {
