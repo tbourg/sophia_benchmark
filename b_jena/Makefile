@@ -24,4 +24,4 @@ clean-all: clean
 
 .PHONY: test
 test: JenaBenchmark.class
-	./run query ../data/persondata_en_10k.ttl
+	./run parse ../data/persondata_en_10k.ttl
