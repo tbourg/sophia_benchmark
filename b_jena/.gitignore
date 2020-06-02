@@ -1,2 +1,5 @@
 apache-jena-*
 *.class
+.idea
+out
+*.iml

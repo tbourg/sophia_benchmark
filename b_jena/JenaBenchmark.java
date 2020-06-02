@@ -1,18 +1,20 @@
 import java.io.*;
-import org.apache.jena.rdf.model.*;
-import org.apache.jena.util.*;
-import org.apache.jena.vocabulary.*;
-
+import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.jena.riot.*;
-import org.apache.jena.graph.*;
+import org.apache.jena.rdf.model.*;
 import org.apache.jena.riot.lang.PipedRDFIterator;
 import org.apache.jena.riot.lang.PipedRDFStream;
 import org.apache.jena.riot.lang.PipedTriplesStream;
+import org.apache.jena.util.*;
+import org.apache.jena.vocabulary.*;
 
+import org.apache.jena.riot.*;
+import org.apache.jena.graph.*;
+import org.apache.jena.sparql.core.*;
+import org.apache.jena.riot.system.*;
 
 public class JenaBenchmark {
     public static void main(String[] args) {
@@ -32,36 +34,37 @@ public class JenaBenchmark {
 
     public static void benchmark_parse(String[] args) {
         System.err.println("benchmark: parse");
-	
-	    
-        long t0, t1;
-	double time_load;
-        t0 = System.nanoTime();
-		final PipedRDFIterator<Triple> iter = new PipedRDFIterator<Triple>();
-		final PipedRDFStream<Triple> tripleStream = new PipedTriplesStream(iter);
-		final ExecutorService executor = Executors.newSingleThreadExecutor();
-		final Runnable parser = new Runnable() {
-			@Override
-			public void run() {
-				// Call the parsing process.
-				try {
-					RDFDataMgr.parse(tripleStream, args[1]);
-				} catch (final Exception e) {
-					e.printStackTrace();
-					System.exit(-1);
-				}
-			}
-		};
-		executor.submit(parser);
-		while (iter.hasNext()) {
-			final Triple triple = iter.next();
-			// parseTriple(triple);
-		}
-	executor.shutdown();
-		iter.close();
-	t1 = System.nanoTime();
-        time_load = (t1-t0)/1e9;
-        System.out.println(time_load);
+
+        final long t0 = System.nanoTime();
+        final String fileInput = args[1];
+        final PipedRDFIterator<Triple> iter = new PipedRDFIterator<Triple>();
+        final PipedRDFStream<Triple> tripleStream = new PipedTriplesStream(iter);
+        final ExecutorService executor = Executors.newSingleThreadExecutor();
+        final Runnable parser = new Runnable() {
+            @Override
+            public void run() {
+                // Call the parsing process.
+                try {
+                    RDFDataMgr.parse(tripleStream, fileInput);
+                } catch (final Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        executor.submit(parser);
+        while (iter.hasNext()) {
+            final Triple triple = iter.next();
+        }
+        executor.shutdown();
+        try {
+            executor.awaitTermination(20, TimeUnit.SECONDS);
+        } catch (final InterruptedException e) {
+            e.printStackTrace();
+        }
+        final long t1 = System.nanoTime();
+        final double diff = (t1 - t0)/1e9;
+        System.out.println(diff);
+        iter.close();
     }
 
     public static void benchmark_query(int queryNum, String[] args) {
@@ -74,7 +77,7 @@ public class JenaBenchmark {
 
         double time_load, time_first = 0, time_rest;
         long mem_graph;
-        
+
         long m0, m1;
         m0 = get_memory_footprint();
         Model model = ModelFactory.createDefaultModel();
@@ -85,8 +88,8 @@ public class JenaBenchmark {
         model.read(in, null, "N-TRIPLES");
         t1 = System.nanoTime();
         m1 = get_memory_footprint();
-        time_load = (t1-t0)/1e9;
-        mem_graph = m1-m0;
+        time_load = (t1 - t0) / 1e9;
+        mem_graph = m1 - m0;
 
         t0 = System.nanoTime();
         Resource personClass = model.createResource("http://dbpedia.org/ontology/Person");
@@ -105,12 +108,12 @@ public class JenaBenchmark {
             nb_stmts += 1;
             if (nb_stmts == 1) {
                 t1 = System.nanoTime();
-                time_first = (t1-t0)/1e9;
+                time_first = (t1 - t0) / 1e9;
                 t0 = System.nanoTime();
             }
         }
         t1 = System.nanoTime();
-        time_rest = (t1-t0)/1e9;
+        time_rest = (t1 - t0) / 1e9;
 
         System.err.println("parsed: " + model.size() + " statements");
         System.err.println("matched: " + nb_stmts + " statements");
@@ -122,23 +125,19 @@ public class JenaBenchmark {
     }
 
     public static long get_memory_footprint() {
-        try {
-            String filename = "/proc/" + ProcessHandle.current().pid() + "/status";
-            BufferedReader br;
-            br = new BufferedReader(
-                    new InputStreamReader(
-                        new FileInputStream(filename)));
-            String vmsize = br.lines()
-                .filter(line -> line.matches("VmSize.*"))
-                .findFirst()
-                .get()
-                .replaceAll("VmSize:\\h*", "")
-                .replaceAll(" *kB", "");
-            return Long.parseLong(vmsize);
-        }
-        catch (Exception ex) {
-            throw new RuntimeException(ex);
-        }
+        // try {
+        // String filename = "/proc/" + ProcessHandle.current().pid() + "/status";
+        // BufferedReader br;
+        // br = new BufferedReader(new InputStreamReader(new
+        // FileInputStream(filename)));
+        // String vmsize = br.lines().filter(line ->
+        // line.matches("VmSize.*")).findFirst().get()
+        // .replaceAll("VmSize:\\h*", "").replaceAll(" *kB", "");
+        // return Long.parseLong(vmsize);
+        // } catch (Exception ex) {
+        // throw new RuntimeException(ex);
+        // }
+        return 0;
     }
 
 }
